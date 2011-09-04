@@ -1,6 +1,6 @@
 (ns clj-librato.metrics
 	(:require [clj-json.core :as json]
-		      [clj-http.client :as client]))
+		  [clj-http.client :as client]))
 
 (defn collate [user api-key gauges counters]
 	(client/post "https://metrics-api.librato.com/v1/metrics.json"
