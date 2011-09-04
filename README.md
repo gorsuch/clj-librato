@@ -9,7 +9,8 @@ Feel free to contribute!
 ````clojure
 (require '[clj-librato.metrics :as metrics])
 
-(metrics/collate "me@mydomain.com" "my-api-key" [{:name "gauge 1" value: 34 } {:name "gauge 2" value: 0}] [{:name "a counter" :value 79213}])
+(metrics/collate "me@mydomain.com" "my-api-key" [{:name "gauge 1" value: 34 } {:name "gauge 2" value: 0}] 
+                                                [{:name "a counter" :value 79213}])
 ````
 
 ## License
