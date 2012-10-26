@@ -10,7 +10,8 @@
   "The full URI of a particular resource, by path fragments."
   [& path-fragments]
   (apply str uri-base 
-         (interpose "/" (map clj-http.util/url-encode path-fragments))))
+         (interpose "/" (map (comp clj-http.util/url-encode str) 
+                             path-fragments))))
 
 (defn unparse-kw
   "Convert a clojure-style dashed keyword map into string underscores.
@@ -48,10 +49,12 @@
   (client/post (uri "metrics")
                (request user api-key {} {:gauges gauges :counters counters})))
 
-(defn get-metric
-  "Gets a metric by name."
+(defn metric
+  "Gets a metric by name.
+  
+  See http://dev.librato.com/v1/get/metrics"
   ([user api-key name]
-   (get-metric user api-key name {}))
+   (metric user api-key name {}))
   ([user api-key name params]
    (let [body (-> (client/get (uri "metrics" name)
                               (request user api-key params))
@@ -62,3 +65,25 @@
             (into {} (map (fn [[source measurements]]
                             [source (map parse-kw measurements)])
                           (:measurements body)))))))
+
+(defn annotate
+  "Create a new annotation on the given stream name. Returns the created annotation.
+
+  See http://dev.librato.com/v1/post/annotations/:name"
+  [user api-key name params]
+  (-> (client/post (uri "annotations" name)
+                   (request user api-key {} params))
+    :body
+    json/parse-string
+    parse-kw))
+
+(defn annotation
+  "Find a particular annotation event.
+
+  See http://dev.librato.com/v1/get/annotations/:name/events/:id"
+  [user api-key name id]
+  (-> (client/get (uri "annotations" name id)
+                  (request user api-key {}))
+    :body
+    json/parse-string
+    parse-kw))

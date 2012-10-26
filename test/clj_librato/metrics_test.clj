@@ -31,10 +31,10 @@
                     (collate user apikey [gauge] [])
 
                     ; Confirm receipt
-                    (let [metric (get-metric user apikey (:name gauge)
-                                             {:end-time (:measure-time gauge)
-                                              :count 1
-                                              :resolution 1})
+                    (let [metric (metric user apikey (:name gauge)
+                                         {:end-time (:measure-time gauge)
+                                          :count 1
+                                          :resolution 1})
                           m (-> metric
                               :measurements
                               (get (:source gauge))
@@ -46,3 +46,20 @@
                       (is (= (:value m) (:value gauge)))
                       (is (= (:count m) 1)))
                   )))
+
+(deftest annotate-test
+         (let [event {:title (str "A test event: " (rand 10000000))
+                      :source "clj-librato"
+                      :description "Testing clj-librato annotations"
+                      :start-time (now)
+                      :end-time (+ 10 (now))}
+               res (annotate user apikey "test.annotations" event)
+               e (annotation user apikey "test.annotations" (:id res))]
+           (is res)
+           (is e)
+           (is (= res e))
+           (is (= (:title e) (:title event)))
+           (is (= (:description e) (:description event)))
+           (is (= (:source e) (:source event)))
+           (is (= (:start-time e) (:start-time event)))
+           (is (= (:end-time e) (:end-time event)))))
