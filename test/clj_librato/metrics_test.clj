@@ -48,13 +48,16 @@
                   )))
 
 (deftest annotate-test
-         (let [event {:title (str "A test event: " (rand 10000000))
+         (let [name  "test.annotations"
+               event {:title (str "A test event: " (rand 10000000))
                       :source "clj-librato"
                       :description "Testing clj-librato annotations"
                       :start-time (now)
                       :end-time (+ 10 (now))}
-               res (annotate user apikey "test.annotations" event)
-               e (annotation user apikey "test.annotations" (:id res))]
+               res (annotate user apikey name event)
+               e (annotation user apikey name (:id res))]
+
+           ; Verify annotation was created.
            (is res)
            (is e)
            (is (= res e))
@@ -62,4 +65,16 @@
            (is (= (:description e) (:description event)))
            (is (= (:source e) (:source event)))
            (is (= (:start-time e) (:start-time event)))
-           (is (= (:end-time e) (:end-time event)))))
+           (is (= (:end-time e) (:end-time event)))
+
+           ; Update annotation
+           (annotate user apikey name (:id res) 
+                     {:end-time (inc (:end-time event))})
+
+           ; Verify update was applied.
+           (is (= (inc (:end-time event))
+                  (:end-time (annotation user apikey name (:id res)))))))
+
+(deftest annotation-test
+         (is (nil? (annotation user apikey "asdilhugflsdbfg" 1234)))
+         (is (nil? (annotation user apikey name 2345235624534))))

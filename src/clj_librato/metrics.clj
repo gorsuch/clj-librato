@@ -66,24 +66,42 @@
                             [source (map parse-kw measurements)])
                           (:measurements body)))))))
 
-(defn annotate
-  "Create a new annotation on the given stream name. Returns the created annotation.
-
-  See http://dev.librato.com/v1/post/annotations/:name"
-  [user api-key name params]
+(defn create-annotation
+  "Creates a new annotation, and returns the created annotation as a map.
+  
+  http://dev.librato.com/v1/post/annotations/:name"
+  [user api-key name annotation]
   (-> (client/post (uri "annotations" name)
-                   (request user api-key {} params))
+                   (request user api-key {} annotation))
     :body
     json/parse-string
     parse-kw))
+
+(defn update-annotation
+  "Updates an annotation.
+  
+  http://dev.librato.com/v1/put/annotations/:name/events/:id"
+  [user api-key name id annotation]
+  (client/put (uri "annotations" name id)
+              (request user api-key {} annotation)))
+
+(defn annotate
+  "Creates or updates an annotation. If id is given, updates. If id is
+  missing, creates a new annotation."
+  ([user api-key name annotation]
+   (create-annotation user api-key name annotation))
+  ([user api-key name id annotation]
+   (update-annotation user api-key name id annotation)))
 
 (defn annotation
   "Find a particular annotation event.
 
   See http://dev.librato.com/v1/get/annotations/:name/events/:id"
   [user api-key name id]
-  (-> (client/get (uri "annotations" name id)
-                  (request user api-key {}))
-    :body
-    json/parse-string
-    parse-kw))
+  (let [res (client/get (uri "annotations" name id)
+                        (request user api-key {}))]
+    (when-not (= 404 (:status res))
+      (-> res
+        :body
+        json/parse-string
+        parse-kw))))
