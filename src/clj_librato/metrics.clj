@@ -1,4 +1,5 @@
 (ns clj-librato.metrics
+  (:use [slingshot.slingshot :only [try+]])
   (:require [clj-json.core   :as json]
             [clj-http.client :as client]
             [clojure.string  :as string]
@@ -37,8 +38,8 @@
    {:basic-auth [user api-key]
     :content-type :json
     :accept :json
-    :query-params (unparse-kw params)
-    :throw-exceptions false})
+    :throw-entire-message? true
+    :query-params (unparse-kw params)})
    
   ([user api-key params body]
    (assoc (request user api-key params)
@@ -58,14 +59,17 @@
 
   ([user api-key name params]
    (assert name)
-   (let [res (client/get (uri "metrics" name)
-                         (request user api-key params))]
-     (when-not (= 404 (:status res))
-       (let [body (-> res :body json/parse-string parse-kw)]
-         (assoc body :measurements
-                (into {} (map (fn [[source measurements]]
-                                [source (map parse-kw measurements)])
-                              (:measurements body)))))))))
+   (try+
+     (let [body (-> (client/get (uri "metrics" name)
+                                (request user api-key params))
+                  :body json/parse-string parse-kw)]
+       (assoc body :measurements
+              (into {} (map (fn [[source measurements]]
+                              [source (map parse-kw measurements)])
+                            (:measurements body)))))
+     (catch [:status 404] _
+       (prn "caught 404")
+       nil))))
 
 (defn create-annotation
   "Creates a new annotation, and returns the created annotation as a map.
@@ -104,10 +108,9 @@
   [user api-key name id]
   (assert name)
   (assert id)
-  (let [res (client/get (uri "annotations" name id)
-                        (request user api-key {}))]
-    (when-not (= 404 (:status res))
-      (-> res
-        :body
-        json/parse-string
-        parse-kw))))
+  (try+
+    (-> (client/get (uri "annotations" name id) (request user api-key {}))
+      :body
+      json/parse-string
+      parse-kw)
+    (catch [:status 404] _ nil)))
