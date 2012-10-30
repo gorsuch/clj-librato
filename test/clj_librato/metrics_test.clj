@@ -76,5 +76,6 @@
                   (:end-time (annotation user apikey name (:id res)))))))
 
 (deftest annotation-test
+         ; 404s return nil
          (is (nil? (annotation user apikey "asdilhugflsdbfg" 1234)))
          (is (nil? (annotation user apikey name 2345235624534))))

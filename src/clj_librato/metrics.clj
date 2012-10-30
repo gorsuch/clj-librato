@@ -57,6 +57,7 @@
    (metric user api-key name {}))
 
   ([user api-key name params]
+   (assert name)
    (let [res (client/get (uri "metrics" name)
                          (request user api-key params))]
      (when-not (= 404 (:status res))
@@ -71,6 +72,7 @@
   
   http://dev.librato.com/v1/post/annotations/:name"
   [user api-key name annotation]
+  (assert name)
   (-> (client/post (uri "annotations" name)
                    (request user api-key {} annotation))
     :body
@@ -82,6 +84,8 @@
   
   http://dev.librato.com/v1/put/annotations/:name/events/:id"
   [user api-key name id annotation]
+  (assert name)
+  (assert id)
   (client/put (uri "annotations" name id)
               (request user api-key {} annotation)))
 
@@ -98,6 +102,8 @@
 
   See http://dev.librato.com/v1/get/annotations/:name/events/:id"
   [user api-key name id]
+  (assert name)
+  (assert id)
   (let [res (client/get (uri "annotations" name id)
                         (request user api-key {}))]
     (when-not (= 404 (:status res))
