@@ -55,16 +55,16 @@
   See http://dev.librato.com/v1/get/metrics"
   ([user api-key name]
    (metric user api-key name {}))
+
   ([user api-key name params]
-   (let [body (-> (client/get (uri "metrics" name)
-                              (request user api-key params))
-                :body
-                json/parse-string
-                parse-kw)]
-     (assoc body :measurements
-            (into {} (map (fn [[source measurements]]
-                            [source (map parse-kw measurements)])
-                          (:measurements body)))))))
+   (let [res (client/get (uri "metrics" name)
+                         (request user api-key params))]
+     (when-not (= 404 (:status res))
+       (let [body (-> res :body json/parse-string parse-kw)]
+         (assoc body :measurements
+                (into {} (map (fn [[source measurements]]
+                                [source (map parse-kw measurements)])
+                              (:measurements body)))))))))
 
 (defn create-annotation
   "Creates a new annotation, and returns the created annotation as a map.
